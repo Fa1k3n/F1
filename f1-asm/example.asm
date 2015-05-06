@@ -8,7 +8,7 @@
 ; labels can contain all alpha chars, big and small
 a_label:
 
-; An assembler directive is of the type, mnemonic param1, param2
+; An assembler directive is of the type, [label:] mnemonic op1|label|alias [, <op2>]
 mv R0, R1
 
 ; Immediate numbers starts with hash # followed by a four bit

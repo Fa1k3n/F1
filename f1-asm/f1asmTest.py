@@ -31,10 +31,5 @@ class TestF1Asm(unittest.TestCase):
         with self.assertRaises(BadAsmException):
             out = asm.decode_line("out r0")
 
-  #  def testBadImmAdressShouldThrowException(self):
-  #      asm = assembler()
-  #      with self.assertRaises(BadAsmException):
-  #          out = asm.decode_line("mv r1, $1")
-
 if __name__ == '__main__':
     unittest.main()

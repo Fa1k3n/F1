@@ -2,16 +2,70 @@
 class BadAsmException(Exception):
     pass
 
-class assembler:
+class Expression:
+    def __init__(self, label=None, mnemonic=None, op1=None, op2=None):
+        self.label = label
+        self.mnemonic = mnemonic
+        self.op1 = op1
+        self.op2 = op2
+
+    def consume(self, op):
+        pass
+
+class Mnemonic:
     op_codes = {
         "ld": 0,
         "st": 1,
         "mv_imm": 2,
         "mv_reg": 3,
         "br": 4
-        ""
     }
+    def __init__(self, mnemonic):
+        self.mnemonic = mnemonic
 
+    def encode(self):
+        op_code = None
+        try:
+            op_code = Mnemonic.op_codes[self.mnemonic]
+        except KeyError:
+            raise BadAsmException("Unknown mnemonic: ", self.mnemonic)
+        return op_code
+
+    def __str__(self):
+        return self.mnemonic
+
+class Operand:
+    def encode(self):
+        return None
+
+    def __str__(self):
+        return ""
+
+class Register(Operand):
+    def __init__(self, reg_name):
+        if reg_name[0].lower() != 'r':
+            raise BadAsmException("Bad formatted register name", reg_name)
+        self.reg_name = reg_name[1:]
+
+    def encode(self):
+        return int(self.reg_name)
+
+    def __str__(self):
+        return "r" + self.reg_name
+
+class Immediate(Operand):
+    def __init__(self, imm_name):
+        if imm_name[0] != "#":
+            raise BadAsmException("Bad formatted immediate", imm_name)
+        self.imm_val = int(imm_name[1:])
+
+    def encode(self):
+        return self.imm_val
+
+    def __str__(self):
+        return "#" + str(self.imm_val)
+
+class assembler:
     def tokenize(self, line):
         line = line.replace(",", "")
         return line.split()
@@ -26,12 +80,7 @@ class assembler:
         return int(reg_str[1:])
 
     def decode_mnemonic(self, mnemonic):
-        op_code = None
-        try:
-            op_code = assembler.op_codes[mnemonic]
-        except KeyError:
-            raise BadAsmException("Unknown mnemonic", mnemonic)
-        return op_code
+        return Mnemonic(mnemonic).encode()
 
     def is_comment(self, line):
         return line[0] == ";"
@@ -50,20 +99,28 @@ class assembler:
         if self.is_compiler_directive(line):
             return None
         toks = self.tokenize(line)
-        if len(toks) > 2:
-            (mnemonic, arg1, arg2) = toks
-        else:
-            (mnemonic, arg1) = toks
-            arg2 = ""
-        if mnemonic == "mv":
-            try:
-                arg1 = self.decode_imm(arg1)
-                mnemonic += "_imm"
-            except Exception:
-                arg1 = self.decode_reg(arg1)
-                mnemonic += "_reg"
-            arg2 = self.decode_reg(arg2)
-        op_code = self.decode_mnemonic(mnemonic)
 
-        return [op_code, arg1, arg2]
+        mnemonic = Mnemonic(toks[0])
+        for tok in toks:
+            op = None
+            try:
+                op = Register(tok)
+            except BadAsmException:
+                pass
+            else:
+                # Handle it as a register
+                mnemonic.consume(op)
+                continue
+
+            try:
+                op = Immediate(tok)
+            except BadAsmException:
+                pass
+            else:
+                # Handle it as an immediate
+                continue
+
+            raise BadAsmException("Unknown token", tok)
+
+        return [mnemonic.encode(), arg1.encode(), arg2.encode()]
 
