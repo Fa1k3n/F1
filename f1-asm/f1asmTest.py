@@ -23,6 +23,18 @@ class TestF1Asm(unittest.TestCase):
         asm = assembler()
         out = asm.decode_line(".start $1a")
         self.assertIsNone(out)
+        out = asm.decode_line("    .StaRt $1a")
+        self.assertIsNone(out)
+
+    def testUnknownMnemonicShouldThrowException(self):
+        asm = assembler()
+        with self.assertRaises(BadAsmException):
+            out = asm.decode_line("out r0")
+
+  #  def testBadImmAdressShouldThrowException(self):
+  #      asm = assembler()
+  #      with self.assertRaises(BadAsmException):
+  #          out = asm.decode_line("mv r1, $1")
 
 if __name__ == '__main__':
     unittest.main()
