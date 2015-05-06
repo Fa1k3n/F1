@@ -3,14 +3,17 @@ class BadAsmException(Exception):
     pass
 
 class Expression:
-    def __init__(self, label=None, mnemonic=None, op1=None, op2=None):
-        self.label = label
-        self.mnemonic = mnemonic
-        self.op1 = op1
-        self.op2 = op2
+    def __init__(self):
+        self.toks = []
 
     def consume(self, op):
-        pass
+        self.toks.append(op)
+
+    def encode(self):
+        ret_val = []
+        for tok in self.toks:
+            ret_val.append(tok.encode())
+        return ret_val
 
 class Mnemonic:
     op_codes = {
@@ -100,16 +103,25 @@ class assembler:
             return None
         toks = self.tokenize(line)
 
-        mnemonic = Mnemonic(toks[0])
+        expr = Expression()
+
         for tok in toks:
             op = None
+            try:
+                op = Mnemonic(tok)
+            except BadAsmException:
+                pass
+            else:
+                expr.consume(op)
+                continue
+
             try:
                 op = Register(tok)
             except BadAsmException:
                 pass
             else:
                 # Handle it as a register
-                mnemonic.consume(op)
+                expr.consume(op)
                 continue
 
             try:
@@ -122,5 +134,5 @@ class assembler:
 
             raise BadAsmException("Unknown token", tok)
 
-        return [mnemonic.encode(), arg1.encode(), arg2.encode()]
+        return expr.encode()
 
